@@ -4,6 +4,7 @@ using Managers.PieceManager;
 namespace ChunkLoader;
 
 [BepInEx.BepInPlugin(Consts.ModGuid, Consts.ModName, Consts.ModVersion)]
+[BepInEx.BepInDependency("com.Frogger.NoUselessWarnings", BepInEx.BepInDependency.DependencyFlags.SoftDependency)]
 public class Plugin : BepInEx.BaseUnityPlugin
 {
     public static Plugin? Instance { get; private set; }
