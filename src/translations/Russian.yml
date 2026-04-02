@@ -1,0 +1,4 @@
+ChunkLoader_none: "none"
+showChunkArea: "Показать область действия"
+you_have_too_many_chunk_loaders_placed: "У вас размещено слишком много колонн наблюдения"
+chunk_loader_already_placed_in_zone: "В этом чанке уже установлена колонна наблюдения"

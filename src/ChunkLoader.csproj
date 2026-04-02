@@ -1,0 +1,82 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net48</TargetFramework>
+        <LangVersion>preview</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+
+        <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+        <DebugType>embedded</DebugType>  <!-- So there are line numbers in error logs -->
+
+        <LibDir>$(MSBuildProjectDirectory)/Lib/</LibDir>
+        <GameDir>$(VALHEIM_DIR)</GameDir>
+        <GameDir Condition="'$(GameDir)' == '' AND '$(OS)' == 'Windows_NT'">C:\Program Files (x86)\Steam\steamapps\common\Valheim\</GameDir>
+        <GameDir Condition="'$(GameDir)' == '' AND '$(OS)' != 'Windows_NT'">$(HOME)/.local/share/Steam/steamapps/common/Valheim/</GameDir>
+        <ManagedAssemblesDir>$(GameDir)valheim_Data/Managed/</ManagedAssemblesDir>
+        <BepInExDir>$(GameDir)BepInEx/</BepInExDir>
+        <BepInExLibsDir>$(GameDir)BepInEx/core/</BepInExLibsDir>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="YamlDotNet" Version="16.3.0" />
+        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3" PrivateAssets="all" />
+        <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.44.1">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="$(LibDir)*.dll"/>
+        <None Update="$(LibDir)*.pdb">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+
+        <Reference Include="$(ManagedAssemblesDir)*.dll"/>
+        <None Update="$(ManagedAssemblesDir)*.pdb">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+
+        <Reference Include="0Harmony">
+            <HintPath>$(BepInExLibsDir)0Harmony.dll</HintPath>
+        </Reference>
+
+        <Reference Include="assembly_valheim" Publicize="true">
+            <HintPath>$(ManagedAssemblesDir)assembly_valheim.dll</HintPath>
+        </Reference>
+        <Reference Include="assembly_utils" Publicize="true">
+            <HintPath>$(ManagedAssemblesDir)assembly_utils.dll</HintPath>
+        </Reference>
+        <Reference Include="assembly_guiutils" Publicize="true">
+            <HintPath>$(ManagedAssemblesDir)assembly_guiutils.dll</HintPath>
+        </Reference>
+        <Reference Include="BepInEx" Publicize="true">
+            <HintPath>$(BepInExLibsDir)BepInEx.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="translations\English.yml" />
+      <EmbeddedResource Include="translations\English.yml" />
+      <None Remove="translations\Russian.yml" />
+      <EmbeddedResource Include="translations\Russian.yml" />
+      <None Remove="assets\chunkloader" />
+      <EmbeddedResource Include="assets\chunkloader" />
+    </ItemGroup>
+
+    <Target Name="ValidateGameDir" BeforeTargets="PrepareForBuild">
+        <Error
+            Condition="!Exists('$(GameDir)')"
+            Text="Valheim game directory not found at '$(GameDir)'. Please set the VALHEIM_DIR environment variable to the correct Valheim installation path. On Windows: set VALHEIM_DIR=C:\Program Files (x86)\Steam\steamapps\common\Valheim\ | On Linux: export VALHEIM_DIR=~/.local/share/Steam/steamapps/common/Valheim/" />
+    </Target>
+
+    <Target Name="CopyDLL" AfterTargets="ILRepack">
+        <Copy SourceFiles="$(TargetDir)$(ProjectName).dll" DestinationFolder="$(GameDir)BepInEx\plugins\"/>
+
+        <MakeDir Directories="$(SolutionDir)build" Condition="!Exists('$(SolutionDir)build\')"/>
+        <Copy SourceFiles="$(TargetDir)$(ProjectName).dll" DestinationFolder="$(SolutionDir)build\"/>
+
+        <Copy SourceFiles="$(TargetDir)$(ProjectName).dll" DestinationFolder="$(SolutionDir)Thunderstore\" Condition="Exists('$(SolutionDir)Thunderstore\')"/>
+    </Target>
+</Project>

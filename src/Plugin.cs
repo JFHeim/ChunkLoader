@@ -1,62 +1,38 @@
-﻿using System.Threading.Tasks;
-using BepInEx;
-using BepInEx.Bootstrap;
-using BepInEx.Configuration;
-using LocalizationManager;
-using ChunkLoader.PieceManager;
-using static ChunkLoader.ChunkLoaderMono;
+﻿using ChunkLoader.Config;
+using Managers.PieceManager;
 
 namespace ChunkLoader;
 
-[BepInPlugin(ModGUID, ModName, ModVersion)]
-[BepInDependency("com.Frogger.NoUselessWarnings", DependencyFlags.SoftDependency)]
-internal class Plugin : BaseUnityPlugin
+[BepInEx.BepInPlugin(Consts.ModGuid, Consts.ModName, Consts.ModVersion)]
+public class Plugin : BepInEx.BaseUnityPlugin
 {
-    internal const string ModName = "ChunkLoader",
-        ModVersion = "1.6.0",
-        ModGUID = $"com.{ModAuthor}.{ModName}",
-        ModAuthor = "Frogger";
-
-    public static HashSet<Vector2i> ForceActive = new();
-    public static List<ZDO> loadersZDOs = new();
-    public static readonly string prefab = "ChunkLoader_stone";
-
-    internal static ConfigEntry<int> chunkLoadersLimitByPlayer;
-    internal static ConfigEntry<int> maxFuelConfig;
-    internal static ConfigEntry<int> startFuelConfig;
-    internal static ConfigEntry<string> fuelItemConfig;
-    internal static ConfigEntry<int> minutesForOneFuelItemConfig;
-    internal static ConfigEntry<bool> infiniteFuelConfig;
-    internal static ConfigEntry<Color> terrainFlashColorConfig;
+    public static Plugin? Instance { get; private set; }
+    private Harmony _harmony = null!;
 
     private void Awake()
     {
-        CreateMod(this, ModName, ModAuthor, ModVersion, ModGUID, true);
-        OnConfigurationChanged += UpdateConfiguration;
+        Instance = this;
+        Log.Initialize(this);
 
-        chunkLoadersLimitByPlayer = config("Main", "ChunkLoaders limit by player", 2, "");
-        terrainFlashColorConfig = config("Main", "Terrain flash color", Color.yellow, "");
-        maxFuelConfig = config("Fuelling", "Max fuel", 100, "");
-        startFuelConfig = config("Fuelling", "Start fuel", 1, "");
-        fuelItemConfig = config("Fuelling", "Fuel item", "Thunderstone", "");
-        minutesForOneFuelItemConfig = config("Fuelling", "Minutes for one fuel item", 5, "");
-        infiniteFuelConfig = config("Fuelling", "Infinite fuel", false, "");
+        _harmony = new Harmony(Consts.ModGuid);
+        _harmony.PatchAll();
+        ConfigsContainer.InitializeConfiguration(this);
 
-        Localizer.Load();
-        InvokeRepeating(nameof(UpdateForceActive), 5, 3);
-        StartCoroutine(WaiteForLoad());
-    }
-
-    private IEnumerator WaiteForLoad()
-    {
-        yield return new WaitUntil(() => Chainloader._loaded);
+        Managers.LocalizationManager.Localizer.Load();
         AddPiece();
     }
 
-    internal static void AddPiece()
+    // // TODO: wtf why is it even needed
+    // private IEnumerator WaiteForLoad()
+    // {
+    //     yield return new WaitUntil(() => BepInEx.Bootstrap.Chainloader._loaded);
+    //     AddPiece();
+    // }
+
+    private void AddPiece()
     {
-        Debug($"Adding piece {prefab}");
-        var piece = new BuildPiece("chunkloader", "ChunkLoader_stone");
+        Log.Info($"Adding piece {Consts.PrefabName}");
+        var piece = new BuildPiece("chunkloader", Consts.PrefabName);
         piece.Prefab.AddComponent<ChunkLoaderMono>();
         piece.Category.Set(BuildPieceCategory.Misc);
         piece.Crafting.Set(CraftingTable.Forge);
@@ -127,46 +103,5 @@ internal class Plugin : BaseUnityPlugin
             .Greek("Η περιοχή γύρω από τη στήλη είναι πάντα ενεργή")
             .Serbian("Подручје око колоне је увек активно")
             .Ukrainian("Територія навколо колони завжди активна");
-    }
-
-    private async Task UpdateForceActive()
-    {
-        try
-        {
-            if (ZDOMan.instance == null) return;
-            loadersZDOs = await ZoneSystem.instance.GetWorldObjectsAsync(prefab);
-            ForceActive.Clear();
-            foreach (var zdo in loadersZDOs)
-                if (zdo.GetBool(burningZDOKey))
-                    ForceActive.Add(zdo.GetPosition().GetZone());
-
-            // Debug($"ForceActive: {ForceActive.GetString()}");
-        }
-        catch (Exception e)
-        {
-            DebugError($"Failed to update force active: {e.Message}");
-        }
-    }
-
-
-    private static void UpdateConfiguration()
-    {
-        var objectDB = ObjectDB.instance;
-        if (objectDB)
-        {
-            var item = objectDB.GetItem(fuelItemConfig.Value);
-            if (item) m_fuelItem = item;
-            else
-            {
-                m_fuelItem = objectDB.GetItem("Thunderstone");
-                DebugWarning($"Item '{fuelItemConfig.Value}' not found. Using default 'Thunderstone'.");
-            }
-        }
-
-        m_infiniteFuel = infiniteFuelConfig.Value;
-        m_maxFuel = maxFuelConfig.Value;
-        m_startFuel = startFuelConfig.Value;
-        minutesForOneFuelItem = minutesForOneFuelItemConfig.Value;
-        flashColor = terrainFlashColorConfig.Value;
     }
 }

@@ -3,7 +3,7 @@
 namespace ChunkLoader.Patch;
 
 [HarmonyPatch]
-public class NoWarnings
+internal static class NoWarnings
 {
     [HarmonyPatch(typeof(ConsoleLogListener), nameof(ConsoleLogListener.LogEvent))] [HarmonyPrefix]
     private static bool NoUselessLogs_ConsoleLogListener_LogEvent(object sender, LogEventArgs eventArgs) =>
@@ -17,9 +17,8 @@ public class NoWarnings
 
     private static bool Void(string log, LogLevel level, string source)
     {
-        if (level == LogLevel.Fatal || level == LogLevel.Error) return true;
-        if (log.Contains("Failed to find expected binary shader data in"))
-            return false;
+        if (level is LogLevel.Fatal or LogLevel.Error) return true;
+        if (log.Contains("Failed to find expected binary shader data in")) return false;
 
         return true;
     }
