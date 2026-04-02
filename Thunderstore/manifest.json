@@ -1,0 +1,9 @@
+{
+    "name": "ChunkLoader",
+    "version_number": "1.7.0",
+    "website_url": "https://github.com/JFHeim/ChunkLoader",
+    "description": "Keeps some area active even there are no players nearby. More details on the mod page.",
+    "dependencies": [
+        "denikson-BepInExPack_Valheim-5.4.2333"
+    ]
+}

@@ -1,4 +1,4 @@
-<img src="Thunderstore/icon.png" align="right" alt="Project Logo" style="border-radius: 10px; width: 128px">
+<img src="https://thunderstore.io/thumbnail-serve/repository/icons/Frogger-ChunkLoader-1.7.0.png/?width=128&height=128" align="right" alt="Project Logo">
 
 # ChunkLoader
 
@@ -57,12 +57,12 @@ bypassing limits or using infinite fuel.
 ## Credits
 
 <img alt="Discord Logo" src="https://freelogopng.com/images/all_img/1691730813discord-icon-png.png" width="16"> Discord — `justafrogger`<br>
-<img alt="Thunderstore Logo" src="https://gcdn.thunderstore.io/live/community/valheim/PNG_color_logo_only_1_transparent.png" width="14"/> [Mod page](https://valheim.thunderstore.io/package/Frogger/ChunkLoader/)
+<img alt="GitHub Logo" src="https://github.githubassets.com/assets/pinned-octocat-093da3e6fa40.svg" width="16"/> [Source Code](https://github.com/JFHeim/ChunkLoader)<br>
 
 <ins>If something doesn't work, you found a bug, or have suggestions — message on Discord or open a GitHub Issue.</ins>
 
 Need a custom mod? Contact me to discuss 😉.
 
 ## Screenshots
-![Screenshot1](Thunderstore/img/screenshot_1.jpeg)
-![Screenshot2](Thunderstore/img/screenshot_2.jpeg)
+![Screenshot1](ttps://github.com/JFHeim/ChunkLoader/blob/main/Thunderstore/img/screenshot_1.jpeg?raw=true)
+![Screenshot2](ttps://github.com/JFHeim/ChunkLoader/blob/main/Thunderstore/img/screenshot_1.jpeg?raw=true)
