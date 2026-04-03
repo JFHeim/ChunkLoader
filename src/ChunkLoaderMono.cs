@@ -33,9 +33,9 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
         if (_nview.GetZDO() == null) return;
 
         // ReSharper disable once CompareOfFloatsByEqualityOperator
-        if (_nview.IsOwner() && _nview.GetZDO().GetFloat(ZDOVars.s_fuel, -1f) == -1)
+        if (_nview.IsOwner() && _nview.GetZDO().GetFloat(ZDOVars.s_fuel, -1f) == -1.0)
         {
-            _nview.GetZDO().Set(ZDOVars.s_fuel, c_startFuel);
+            _nview.GetZDO().Set(ZDOVars.s_fuel, (float)c_startFuel);
             if (c_startFuel > 0) SpawnFuelAddedEffect();
         }
 
