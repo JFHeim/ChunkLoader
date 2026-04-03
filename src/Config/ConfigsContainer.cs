@@ -26,7 +26,7 @@ public partial class ConfigsContainer
     private ConfigsContainer()
     {
         _limitByPlayerConfig         = config("Main",     "ChunkLoaders limit by player", 2,                  "");
-        _terrainFlashColorConfig     = config("Main",     "Terrain flash color",          Color.yellow,    "");
+        _terrainFlashColorConfig     = config("Main",     "Terrain flash color",          Color.blue,      "");
         _maxFuelConfig               = config("Fuelling", "Max fuel",                     100,                "");
         _startFuelConfig             = config("Fuelling", "Start fuel",                   1,                  "");
         _fuelItemConfig              = config("Fuelling", "Fuel item",                    Consts.DefaultFuel, "");
