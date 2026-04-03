@@ -30,8 +30,7 @@ public static class MeshFlasher
         {
             var heightmap = obj.GetComponent<Heightmap>();
             heightmapMaterial = Instantiate(new Material(heightmap.m_meshRenderer.material));
-            heightmap.m_meshRenderer.material.shader
-                = Shader.Find("Standard"); // TODO: this always fails, we need to find shader ref in some other way
+            heightmap.m_meshRenderer.material.shader = Patch.FindShaderReferences.Shaders["Standard"];
         }
 
         foreach (var renderer in renderersInChildren)

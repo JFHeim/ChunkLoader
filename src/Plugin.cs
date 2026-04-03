@@ -23,13 +23,6 @@ public class Plugin : BepInEx.BaseUnityPlugin
         AddPiece();
     }
 
-    // // TODO: wtf why is it even needed
-    // private IEnumerator WaiteForLoad()
-    // {
-    //     yield return new WaitUntil(() => BepInEx.Bootstrap.Chainloader._loaded);
-    //     AddPiece();
-    // }
-
     private void AddPiece()
     {
         Log.Info($"Adding piece {Consts.PrefabName}");
