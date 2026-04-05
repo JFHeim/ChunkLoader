@@ -66,7 +66,7 @@ public partial class ConfigsContainer
         _startFuelConfig = config(
             group: "Fuelling",
             name: "Start fuel",
-            value: 1,
+            value: 0,
             description: "Initial fuel amount provided when the ChunkLoader is first constructed."
         );
 
