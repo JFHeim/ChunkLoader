@@ -93,7 +93,8 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
             var centerPosition = transform.position;
             var centerZone = ZoneSystem.GetZone(centerPosition);
             var flashColor = c_flashColor;
-            Heightmap.FindHeightmap(centerPosition).m_meshRenderer.Flash(flashColor, Color.white, 1.5f);
+            var flashTime = (float)ConfigsContainer.TerrainFlashTime.TotalSeconds;
+            Heightmap.FindHeightmap(centerPosition).m_meshRenderer.Flash(flashColor, Color.white, flashTime);
             if (ConfigsContainer.LoadSurroundingZones)
             {
                 foreach (var pos in ((Vector2i[])
@@ -102,7 +103,7 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
                              new Vector2i(-1, 0), new Vector2i(-1, -1), new Vector2i(1, -1), new Vector2i(-1, 1)
                          ]).Select(x => ZoneSystem.GetZonePos(centerZone + x)))
                 {
-                    Heightmap.FindHeightmap(pos).m_meshRenderer.Flash(flashColor, Color.white, 1.5f);
+                    Heightmap.FindHeightmap(pos).m_meshRenderer.Flash(flashColor, Color.white, flashTime);
                 }
             }
 

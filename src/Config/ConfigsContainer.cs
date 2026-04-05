@@ -6,14 +6,15 @@ public partial class ConfigsContainer
 {
     public static ItemDrop? FuelItem { get; private set; }
 
-    public static int    LimitByPlayer;
-    public static int    MaxFuel;
-    public static int    StartFuel;
-    public static string FuelItemName = null!;
-    public static int    MinutesForOneFuelItem;
-    public static bool   InfiniteFuel;
-    public static Color  TerrainFlashColor;
-    public static bool   LoadSurroundingZones;  // Loads 9 chunks intead of 1
+    public static int      LimitByPlayer;
+    public static int      MaxFuel;
+    public static int      StartFuel;
+    public static string   FuelItemName = null!;
+    public static int      MinutesForOneFuelItem;
+    public static bool     InfiniteFuel;
+    public static Color    TerrainFlashColor;
+    public static TimeSpan TerrainFlashTime;
+    public static bool     LoadSurroundingZones;  // Loads 9 chunks intead of 1
 
     private readonly ConfigEntry<int> _limitByPlayerConfig;
     private readonly ConfigEntry<int> _maxFuelConfig;
@@ -22,6 +23,7 @@ public partial class ConfigsContainer
     private readonly ConfigEntry<int> _minutesForOneFuelItemConfig;
     private readonly ConfigEntry<bool> _infiniteFuelConfig;
     private readonly ConfigEntry<Color> _terrainFlashColorConfig;
+    private readonly ConfigEntry<float> _terrainFlashTimeConfig;
     private readonly ConfigEntry<bool> _loadSurroundingZones;
 
     private ConfigsContainer()
@@ -38,6 +40,13 @@ public partial class ConfigsContainer
             name: "Terrain flash color",
             value: Color.blue,
             description: "Color of the visual area indicator when showing loaded boundaries."
+        );
+
+        _terrainFlashTimeConfig = config(
+            group: "Main",
+            name: "Terrain flash time",
+            value: 5f,
+            description: "For how long to keep chunks highlighted. In seconds."
         );
 
         _loadSurroundingZones = config(
@@ -96,6 +105,10 @@ public partial class ConfigsContainer
 
         if (_minutesForOneFuelItemConfig.Value <= 0) Log.Warning("Configuration invalid, MinutesForOneFuelItem should be > 0");
         else MinutesForOneFuelItem = _minutesForOneFuelItemConfig.Value;
+
+        if (_terrainFlashTimeConfig.Value <= 0) Log.Warning("Configuration invalid, TerrainFlashTime should be > 0 seconds");
+        else if (_terrainFlashTimeConfig.Value > 300) Log.Warning("Configuration invalid, TerrainFlashTime should be < 300 seconds. Why the heck would you highlight terrain for more than 5 minutes?");
+        else TerrainFlashTime = TimeSpan.FromSeconds(_terrainFlashTimeConfig.Value);
 
         InfiniteFuel          = _infiniteFuelConfig.Value;
         TerrainFlashColor     = _terrainFlashColorConfig.Value;
