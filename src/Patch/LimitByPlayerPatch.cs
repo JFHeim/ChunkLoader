@@ -14,13 +14,11 @@ internal static class LimitByPlayerPatch
     [HarmonyPatch(nameof(Player.PlacePiece))]
     private static void PreventInvalidPlacement_OnPlace(Player __instance) => TheCheck(__instance, true);
 
-    private static void TheCheck(Player __instance, bool showMessage)
+    private static void TheCheck(Player player, bool showMessage)
     {
-        var player = __instance;
-
         if (!Player.m_localPlayer || Player.m_localPlayer != player) return;
         if (Player.m_debugMode) return;
-        if (Utils.GetPrefabName(player.m_placementGhost) != Consts.PrefabName) return;
+        if (!player.m_placementGhost || Utils.GetPrefabName(player.m_placementGhost) != Consts.PrefabName) return;
         var piece = player.m_placementGhost?.GetComponent<Piece>();
         if (!piece) return;
 
