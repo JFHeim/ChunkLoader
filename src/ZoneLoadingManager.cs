@@ -125,7 +125,6 @@ public class ZoneLoadingManager : MonoBehaviour
         {
             if (!zdo.IsValid()) continue;
 
-            var fuel = zdo.GetFloat(ZDOVars.s_fuel, 0);
             var isBurning = ChunkLoaderMono.IsBurning(zdo);
             var position = zdo.GetPosition();
 
@@ -133,9 +132,17 @@ public class ZoneLoadingManager : MonoBehaviour
             var pinData = minimap.AddPin(position, pinType, string.Empty, false, false);
             _loadersMinimapPins.Add(pinData);
 
-            var timeRemaining = TimeSpan.FromMinutes(ConfigsContainer.MinutesForOneFuelItem * fuel);
+
+            var labelString = string.Empty;
+            if (isBurning && !ConfigsContainer.InfiniteFuel)
+            {
+                var fuel = zdo.GetFloat(ZDOVars.s_fuel, 0);
+                var timeRemaining = TimeSpan.FromMinutes(ConfigsContainer.MinutesForOneFuelItem * fuel);
+                labelString = timeRemaining.ToHumanTimeString();
+            }
+
             var oldName = pinData.m_name;
-            pinData.m_name = isBurning ? timeRemaining.ToHumanTimeString() : string.Empty;
+            pinData.m_name = labelString;
             if (oldName != pinData.m_name) minimap.m_pinUpdateRequired = true;
             if (pinData.m_NamePinData == null)
             {
