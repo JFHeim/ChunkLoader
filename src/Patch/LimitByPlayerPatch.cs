@@ -6,36 +6,68 @@ namespace ChunkLoader.Patch;
 [HarmonyPatch(typeof(Player))]
 internal static class LimitByPlayerPatch
 {
-    [HarmonyPostfix]
-    [HarmonyPatch(nameof(Player.UpdatePlacementGhost))]
-    private static void PreventInvalidPlacement_OnPlacementGhost(Player __instance) => TheCheck(__instance, false);
+    // [HarmonyPostfix]
+    // [HarmonyPatch(nameof(Player.UpdatePlacementGhost))]
+    // private static void PreventInvalidPlacement_OnPlacementGhost(Player __instance) => TheCheck(__instance, false);
 
     [HarmonyPrefix]
-    [HarmonyPatch(nameof(Player.PlacePiece))]
-    private static void PreventInvalidPlacement_OnPlace(Player __instance) => TheCheck(__instance, true);
-
-    private static void TheCheck(Player player, bool showMessage)
+    [HarmonyPatch(nameof(Player.TryPlacePiece))]
+    private static bool PreventInvalidPlacement_PlacePiece(Player __instance, ref bool __result)
     {
-        if (!Player.m_localPlayer || Player.m_localPlayer != player) return;
-        if (Player.m_debugMode) return;
-        if (!player.m_placementGhost || Utils.GetPrefabName(player.m_placementGhost) != Consts.PrefabName) return;
-        var piece = player.m_placementGhost?.GetComponent<Piece>();
-        if (!piece) return;
+        var result = TheCheck(__instance, true);
+        if (result is Result.Invalid)
+        {
+            __result = false;
+            return false;
+        }
 
-        if (ZoneLoadingManager.ForceActive.Contains(ZoneSystem.GetZone(Player.m_localPlayer.transform.position)))
+        return true;
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(nameof(Player.TryPlacePiece))]
+    private static void ForceUpdateLoadersListAfterPlacement(Player __instance, Piece piece, ref bool __result)
+    {
+        if(!__result) return;
+        ZoneLoadingManager.ForceUpdateLoadersList();
+    }
+
+    private static Result TheCheck(Player player, bool showMessage)
+    {
+        if (!Player.m_localPlayer || Player.m_localPlayer != player) return Result.Skip;
+        if (Player.m_debugMode) return Result.Skip;
+
+        var placementGhost = player.m_placementGhost;
+        if (!placementGhost || Utils.GetPrefabName(placementGhost) != Consts.PrefabName) return Result.Skip;
+        var piece = placementGhost.GetComponent<Piece>();
+        if (!piece) return Result.Skip;
+
+        var placementZone = ZoneSystem.GetZone(placementGhost.transform.position);
+        if (ZoneLoadingManager.ForceActive.Contains(placementZone))
         {
             player.m_placementStatus = Player.PlacementStatus.Invalid;
             player.SetPlacementGhostValid(false);
             if (showMessage) player.Message(MessageHud.MessageType.Center, "$chunk_loader_already_placed_in_zone");
-            return;
+            return Result.Invalid;
         }
 
-        var zdos = ZoneLoadingManager.LoadersInWorld.Where(x => x.GetLong(ZDOVars.s_creator) == Player.m_localPlayer.GetPlayerID()).ToList();
+        var localPlayerId = Player.m_localPlayer.GetPlayerID();
+        var zdos = ZoneLoadingManager.LoadersInWorld.Where(x => x.GetLong(ZDOVars.s_creator) == localPlayerId).ToList();
         if (zdos.Count >= ConfigsContainer.LimitByPlayer)
         {
             player.m_placementStatus = Player.PlacementStatus.Invalid;
             player.SetPlacementGhostValid(false);
             if (showMessage) player.Message(MessageHud.MessageType.Center, "$you_have_too_many_chunk_loaders_placed");
+            return Result.Invalid;
         }
+
+        return Result.Valid;
+    }
+
+    private enum Result
+    {
+        Skip,
+        Valid,
+        Invalid
     }
 }

@@ -52,6 +52,14 @@ public class ZoneLoadingManager : MonoBehaviour
         _loadersInWorld.AddRange(tempLoaders);
     }
 
+    private void FindLoadersInWorldSync(List<ZDO> tempLoaders)
+    {
+        int index = 0;
+        while (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(Consts.PrefabName, tempLoaders, ref index)) continue;
+        _loadersInWorld.Clear();
+        _loadersInWorld.AddRange(tempLoaders);
+    }
+
     private void UpdateFuelInLoaders()
     {
         foreach (var zdo in _loadersInWorld)
@@ -148,5 +156,12 @@ public class ZoneLoadingManager : MonoBehaviour
         zdo.Set(ZDOVars.s_lastTime, time.Ticks); // s_lastTime = last time checked
 
         return timeSinceLastUpdate;
+    }
+
+    public static void ForceUpdateLoadersList()
+    {
+        if(!_instance) return;
+        _instance.FindLoadersInWorldSync([]);
+        _instance.UpdateZonesList();
     }
 }
