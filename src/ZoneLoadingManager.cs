@@ -89,7 +89,20 @@ public class ZoneLoadingManager : MonoBehaviour
         foreach (var zdo in _loadersInWorld)
         {
             if (!ChunkLoaderMono.IsBurning(zdo)) continue;
-            _forceActive.Add(ZoneSystem.GetZone(zdo.GetPosition()));
+            var loaderPos = zdo.GetPosition();
+            Vector2i loaderCenterZone = ZoneSystem.GetZone(loaderPos);
+            _forceActive.Add(loaderCenterZone + new Vector2i(0, 0));
+            if (ConfigsContainer.LoadSurroundingZones)
+            {
+                _forceActive.Add(loaderCenterZone + new Vector2i(1, 0));
+                _forceActive.Add(loaderCenterZone + new Vector2i(0, 1));
+                _forceActive.Add(loaderCenterZone + new Vector2i(1, 1));
+                _forceActive.Add(loaderCenterZone + new Vector2i(0, -1));
+                _forceActive.Add(loaderCenterZone + new Vector2i(-1, 0));
+                _forceActive.Add(loaderCenterZone + new Vector2i(-1, -1));
+                _forceActive.Add(loaderCenterZone + new Vector2i(1, -1));
+                _forceActive.Add(loaderCenterZone + new Vector2i(-1, 1));
+            }
         }
     }
 

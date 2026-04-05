@@ -90,7 +90,22 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
         if (!_nview.HasOwner()) _nview.ClaimOwnership();
         if (alt)
         {
-            Heightmap.FindHeightmap(transform.position).m_meshRenderer.Flash(c_flashColor, Color.white, 1.5f);
+            var centerPosition = transform.position;
+            var centerZone = ZoneSystem.GetZone(centerPosition);
+            var flashColor = c_flashColor;
+            Heightmap.FindHeightmap(centerPosition).m_meshRenderer.Flash(flashColor, Color.white, 1.5f);
+            if (ConfigsContainer.LoadSurroundingZones)
+            {
+                foreach (var pos in ((Vector2i[])
+                         [
+                             new Vector2i(1, 0), new Vector2i(0, 1), new Vector2i(1, 1), new Vector2i(0, -1),
+                             new Vector2i(-1, 0), new Vector2i(-1, -1), new Vector2i(1, -1), new Vector2i(-1, 1)
+                         ]).Select(x => ZoneSystem.GetZonePos(centerZone + x)))
+                {
+                    Heightmap.FindHeightmap(pos).m_meshRenderer.Flash(flashColor, Color.white, 1.5f);
+                }
+            }
+
             return true;
         }
 
