@@ -167,9 +167,10 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
             _sb.Append(Mathf.Ceil(_nview.GetZDO().GetFloat(ZDOVars.s_fuel)));
             _sb.Append('/');
             _sb.Append(m_maxFuel);
-            _sb.AppendLine(" )");
+            _sb.Append(" )\n");
             _sb.Append("[<color=yellow><b>$KEY_Use</b></color>] $piece_use ");
-            _sb.AppendLine(c_fuelItem.m_itemData.m_shared.m_name);
+            _sb.Append(c_fuelItem.m_itemData.m_shared.m_name);
+            _sb.Append("\n");
             _sb.Append("[<color=yellow><b>1-8</b></color>] $piece_useitem");
         }
 

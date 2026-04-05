@@ -5,7 +5,7 @@ public static class Consts
     public const string
         ModName = "ChunkLoader",
         ModAuthor = "Frogger",
-        ModVersion = "1.7.0",
+        ModVersion = "1.7.1",
         ModGuid = $"com.{ModAuthor}.{ModName}";
 
     public const string MainSceneName = "main";
@@ -16,4 +16,6 @@ public static class Consts
     public static readonly int EmissionColorShaderPropertyID = Shader.PropertyToID("_EmissionColor");
     public static readonly Color ChunkLoaderDeactivatedColor = Color.red;
     public const float ChunkLoaderDeactivatedEmission = 6;
+    public static Minimap.PinType ChunkLoaderPinTypeBurning;
+    public static Minimap.PinType ChunkLoaderPinTypeNotBurning;
 }

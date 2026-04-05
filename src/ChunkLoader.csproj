@@ -57,9 +57,13 @@
     </ItemGroup>
 
     <ItemGroup>
+      <EmbeddedResource Include="translations\French.yml" />
+      <EmbeddedResource Include="translations\Spanish.yml" />
       <None Remove="translations\English.yml" />
+      <EmbeddedResource Include="translations\Chinese.yml" />
       <EmbeddedResource Include="translations\English.yml" />
       <None Remove="translations\Russian.yml" />
+      <EmbeddedResource Include="translations\German.yml" />
       <EmbeddedResource Include="translations\Russian.yml" />
       <None Remove="assets\chunkloader" />
       <EmbeddedResource Include="assets\chunkloader" />

@@ -30,7 +30,7 @@ internal static class LimitByPlayerPatch
             return;
         }
 
-        var zdos = ZoneLoadingManager.LoadersInWold.Where(x => x.GetLong(ZDOVars.s_creator) == Player.m_localPlayer.GetPlayerID()).ToList();
+        var zdos = ZoneLoadingManager.LoadersInWorld.Where(x => x.GetLong(ZDOVars.s_creator) == Player.m_localPlayer.GetPlayerID()).ToList();
         if (zdos.Count >= ConfigsContainer.LimitByPlayer)
         {
             player.m_placementStatus = Player.PlacementStatus.Invalid;

@@ -16,12 +16,12 @@ internal static class FixEffectsOnPiece
         Fix(chunkLoader.transform, guardStone.transform, "sparcs");
         Fix(chunkLoader.transform, guardStone.transform, "flare");
 
-        var woodFloor = __instance.GetPrefab("wood_floor")?.GetComponent<WearNTear>();
-        if (woodFloor)
+        var stonePile = __instance.GetPrefab("stone_pile")?.GetComponent<WearNTear>();
+        if (stonePile)
         {
-            chunkLoader.GetComponent<Piece>().m_placeEffect = woodFloor.GetComponent<Piece>().m_placeEffect;
-            chunkLoader.m_destroyedEffect = woodFloor.m_destroyedEffect;
-            chunkLoader.m_hitEffect = woodFloor.m_hitEffect;
+            chunkLoader.GetComponent<Piece>().m_placeEffect = stonePile.GetComponent<Piece>().m_placeEffect;
+            chunkLoader.m_destroyedEffect = stonePile.m_destroyedEffect;
+            chunkLoader.m_hitEffect = stonePile.m_hitEffect;
         }
 
         var smelter = __instance.GetPrefab("smelter")?.GetComponent<WearNTear>();
