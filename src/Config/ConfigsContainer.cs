@@ -52,6 +52,11 @@ public partial class ConfigsContainer
         TerrainFlashColor     = _terrainFlashColorConfig.Value;
         FuelItemName              = _fuelItemConfig.Value;
 
+        AssignFuelItem();
+    }
+
+    internal static void AssignFuelItem()
+    {
         if (ObjectDB.instance)
         {
             FuelItem = ObjectDB.instance.GetItemPrefab(FuelItemName)?.GetComponent<ItemDrop>();
