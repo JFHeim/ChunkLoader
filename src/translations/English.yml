@@ -1,4 +1,4 @@
-piece_ChunkLoader_stone: "Observation Pillar"
+piece_ChunkLoader_stone: "Observation Column"
 piece_ChunkLoader_stone_description: "Keeps surrounding chunks active"
 showChunkArea: "Show active chunks"
 you_have_too_many_chunk_loaders_placed: "You have placed too many observation pillars"
