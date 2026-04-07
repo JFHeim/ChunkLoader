@@ -18,4 +18,6 @@ public static class Consts
     public const float ChunkLoaderDeactivatedEmission = 6;
     public static Minimap.PinType ChunkLoaderPinTypeBurning;
     public static Minimap.PinType ChunkLoaderPinTypeNotBurning;
+    public const int ZdoEnabled = 1;
+    public const int ZdoDisabled = 2;
 }

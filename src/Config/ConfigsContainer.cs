@@ -15,6 +15,7 @@ public partial class ConfigsContainer
     public static Color    TerrainFlashColor;
     public static TimeSpan TerrainFlashTime;
     public static bool     LoadSurroundingZones;  // Loads 9 chunks intead of 1
+    public static bool     CanTurnOffLoaders;
 
     private readonly ConfigEntry<int> _limitByPlayerConfig;
     private readonly ConfigEntry<int> _maxFuelConfig;
@@ -24,7 +25,8 @@ public partial class ConfigsContainer
     private readonly ConfigEntry<bool> _infiniteFuelConfig;
     private readonly ConfigEntry<Color> _terrainFlashColorConfig;
     private readonly ConfigEntry<float> _terrainFlashTimeConfig;
-    private readonly ConfigEntry<bool> _loadSurroundingZones;
+    private readonly ConfigEntry<bool> _loadSurroundingZonesConfig;
+    private readonly ConfigEntry<bool> _canTurnOffConfig;
 
     private ConfigsContainer()
     {
@@ -49,11 +51,18 @@ public partial class ConfigsContainer
             description: "For how long to keep chunks highlighted. In seconds."
         );
 
-        _loadSurroundingZones = config(
+        _loadSurroundingZonesConfig = config(
             group: "Main",
             name: "Load surrounding chunks",
             value: true,
             description: "If true, loads 9 chunks (3x3 grid). If false, only the central chunk is loaded."
+        );
+
+        _canTurnOffConfig = config(
+            group: "Main",
+            name: "Can turn off",
+            value: true,
+            description: "If true, players can turn off chunk loaders so it stops working and consuming fuel."
         );
 
         _maxFuelConfig = config(
@@ -80,7 +89,7 @@ public partial class ConfigsContainer
         _minutesForOneFuelItemConfig = config(
             group: "Fuelling",
             name: "Minutes for one fuel item",
-            value: 5,
+            value: 15,
             description: "Real-time minutes of operation provided by a single fuel unit."
         );
 
@@ -113,13 +122,15 @@ public partial class ConfigsContainer
         InfiniteFuel          = _infiniteFuelConfig.Value;
         TerrainFlashColor     = _terrainFlashColorConfig.Value;
         FuelItemName          = _fuelItemConfig.Value;
-        LoadSurroundingZones  = _loadSurroundingZones.Value;
+        LoadSurroundingZones  = _loadSurroundingZonesConfig.Value;
+        CanTurnOffLoaders  = _canTurnOffConfig.Value;
 
         AssignFuelItem();
     }
 
     internal static void AssignFuelItem()
     {
+        if(!Helpers.Helper.IsMainScene()) return;
         if (ObjectDB.instance)
         {
             FuelItem = ObjectDB.instance.GetItemPrefab(FuelItemName)?.GetComponent<ItemDrop>();
@@ -129,5 +140,10 @@ public partial class ConfigsContainer
                 FuelItem = ObjectDB.instance.GetItemPrefab(Consts.DefaultFuel)?.GetComponent<ItemDrop>();
             }
         }
+    }
+
+    public enum HoverTextRenderMode
+    {
+        _1, _2, _3, _4
     }
 }

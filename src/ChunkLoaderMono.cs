@@ -7,7 +7,7 @@ namespace ChunkLoader;
 public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
 {
     private const float HoldRepeatInterval = 0.2f;
-    private const float LastUseTime = 0;
+    private float _lastUseTime = 0;
 
     private ZNetView? _nview;
     internal EffectList m_fuelAddedEffects = new();
@@ -15,6 +15,7 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
 
     private Color _workingColor = Color.clear;
     private float _updateTime;
+    private float _lastToggleActiveStateTime;
     private readonly StringBuilder _sb = new();
 
     private static ItemDrop? c_fuelItem => ConfigsContainer.FuelItem;
@@ -22,6 +23,7 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
     private static bool c_infiniteFuel => ConfigsContainer.InfiniteFuel;
     private static int m_maxFuel => ConfigsContainer.MaxFuel;
     private static Color c_flashColor => ConfigsContainer.TerrainFlashColor;
+    private static bool c_canTurnOff => ConfigsContainer.CanTurnOffLoaders;
 
     private void Start() => _updateTime = Time.time + 10f;
 
@@ -39,7 +41,8 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
             if (c_startFuel > 0) SpawnFuelAddedEffect();
         }
 
-        _nview.Register("AddFuel", RPC_AddFuel);
+        _nview.Register(nameof(RPC_AddFuelAmount), RPC_AddFuelAmount);
+        _nview.Register<int>(nameof(RPC_ToggleActiveState), RPC_ToggleActiveState);
 
         _renderer = Utils.FindChild(transform, "SM_cloumn").GetComponent<Renderer>();
         if (!_renderer) Log.Error($"Failed to find renderer inside of ChunkLoader object. Have you modified '{Consts.PrefabName}' prefab?");
@@ -55,7 +58,7 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
         UpdateVisuals();
     }
 
-    private void RPC_AddFuel(long sender)
+    private void RPC_AddFuelAmount(long sender)
     {
         if(!_nview) return;
         if (!_nview.IsOwner()) return;
@@ -67,6 +70,22 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
         _nview.GetZDO().Set(ZDOVars.s_fuel, newFuel);
 
         SpawnFuelAddedEffect();
+        UpdateVisuals();
+    }
+    
+    public void RPC_ToggleActiveState(long sender, int maybeBool)
+    {
+        Log.Info($"RPC_ToggleActiveState sender={sender} maybeBoolRaw={maybeBool}");
+        if (_nview && _nview.IsValid() && _nview.IsOwner())
+        {
+            bool isCurrentlyEnabled = _nview.GetZDO().GetInt(ZDOVars.s_state, ZdoEnabled) == ZdoEnabled;
+            bool nextState = maybeBool == -1 ? !isCurrentlyEnabled : (maybeBool == 1);
+            _nview.GetZDO().Set(ZDOVars.s_state, nextState == true ? ZdoEnabled : ZdoDisabled);
+            Log.Info($"RPC_ToggleActiveState isCurrentlyEnabled={isCurrentlyEnabled} nextState={nextState}");
+
+            // TODO: add vfx on active state toogle
+            // _toggleOnEffects.Create(transform.position, Quaternion.identity, variant: flag ? 2 : 1);
+        }
         UpdateVisuals();
     }
 
@@ -86,9 +105,23 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
             return false;
         }
 
-        if (hold && (HoldRepeatInterval <= 0.0 || Time.time - LastUseTime < HoldRepeatInterval)) return false;
+        var currentFuel = _nview.GetZDO().GetFloat(ZDOVars.s_fuel, 0f);
+        var time = Time.time;
+        if (c_canTurnOff && hold && alt && currentFuel > 0)
+        {
+            if (_lastToggleActiveStateTime <= time)
+            {
+                _nview.InvokeRPC(nameof(RPC_ToggleActiveState), -1);
+                _lastToggleActiveStateTime = time + 1f;
+            }
+            return true;
+        }
+
+        // if (hold && (HoldRepeatInterval <= 0.0 || time - _lastUseTime < HoldRepeatInterval)) return false;
+        // _lastUseTime = time;
+
         if (!_nview.HasOwner()) _nview.ClaimOwnership();
-        if (alt)
+        if (alt && !hold)
         {
             var centerPosition = transform.position;
             var centerZone = ZoneSystem.GetZone(centerPosition);
@@ -115,7 +148,7 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
         if (c_infiniteFuel) return false;
         if (inventory.HaveItem(c_fuelItem.m_itemData.m_shared.m_name))
         {
-            if (Mathf.CeilToInt(_nview.GetZDO().GetFloat(ZDOVars.s_fuel)) >= m_maxFuel)
+            if (Mathf.CeilToInt(currentFuel) >= m_maxFuel)
             {
                 user.Message(MessageHud.MessageType.Center, Localization.instance.Localize("$msg_cantaddmore", c_fuelItem.m_itemData.m_shared.m_name));
                 return false;
@@ -123,7 +156,7 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
 
             user.Message(MessageHud.MessageType.Center, Localization.instance.Localize("$msg_fireadding", c_fuelItem.m_itemData.m_shared.m_name));
             inventory.RemoveItem(c_fuelItem.m_itemData.m_shared.m_name, 1);
-            _nview.InvokeRPC("AddFuel");
+            _nview.InvokeRPC(nameof(RPC_AddFuelAmount));
             return true;
         }
 
@@ -157,7 +190,7 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
         var inventory = user.GetInventory();
         user.Message(MessageHud.MessageType.Center, Localization.instance.Localize("$msg_fireadding", item.m_shared.m_name));
         inventory.RemoveItem(item, 1);
-        _nview.InvokeRPC("AddFuel");
+        _nview.InvokeRPC(nameof(RPC_AddFuelAmount));
         return true;
 
     }
@@ -165,34 +198,47 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
     private bool IsBurning()
     {
         if (!_nview || _nview.m_ghost) return false;
-        return c_infiniteFuel || IsBurning(_nview.GetZDO());
+        return IsBurning(_nview.GetZDO());
     }
 
-    public static bool IsBurning(ZDO zdo) => c_infiniteFuel || zdo.GetFloat(ZDOVars.s_fuel) > 0.0;
+    public static bool IsBurning(ZDO zdo)
+    {
+        if (!zdo.IsValid()) return false;
+        return IsEnabled(zdo) && (c_infiniteFuel || zdo.GetFloat(ZDOVars.s_fuel) > 0.0);
+    }
+
+    private bool IsEnabled()
+    {
+        if (!_nview || _nview.m_ghost || !_nview.IsValid()) return true;
+        return IsEnabled(_nview.GetZDO());
+    }
+
+    public static bool IsEnabled(ZDO zdo)
+    {
+        if (!c_canTurnOff) return true;
+        if (!zdo.IsValid()) return true;
+        return zdo.GetInt(ZDOVars.s_state, ZdoEnabled) == ZdoEnabled;
+    }
 
     public string GetHoverText()
     {
         if (c_fuelItem == null) return string.Empty;
         if (!_nview || _nview.m_ghost || !_nview.IsValid()) return string.Empty;
 
-        _sb.Clear();
-        _sb.Append(PieceLocalNameKey);
-        if (!c_infiniteFuel)
-        {
-            _sb.Append(" ( $piece_fire_fuel ");
-            _sb.Append(Mathf.Ceil(_nview.GetZDO().GetFloat(ZDOVars.s_fuel)));
-            _sb.Append('/');
-            _sb.Append(m_maxFuel);
-            _sb.Append(" )\n");
-            _sb.Append("[<color=yellow><b>$KEY_Use</b></color>] $piece_use ");
-            _sb.Append(c_fuelItem.m_itemData.m_shared.m_name);
-            _sb.Append("\n");
-            _sb.Append("[<color=yellow><b>1-8</b></color>] $piece_useitem");
-        }
+        var currentFuel = _nview.GetZDO().GetFloat(ZDOVars.s_fuel);
 
-        _sb.AppendLine();
-        _sb.Append("[<color=yellow><b>$KEY_AltPlace</b></color>] $showChunkArea");
-        return Localization.instance.Localize(_sb.ToString());
+        string str = Localization.instance.Localize(PieceLocalNameKey);
+        if (!c_infiniteFuel)
+            str +=
+                $" ( $piece_fire_fuel {Mathf.Ceil(_nview.GetZDO().GetFloat(ZDOVars.s_fuel))}/{m_maxFuel} )\n" +
+                $"[<color=yellow><b>$KEY_Use</b></color>] $piece_use {c_fuelItem.m_itemData.m_shared.m_name}\n" +
+                $"[<color=yellow><b>1-8</b></color>] $piece_useitem";
+
+        str += "\n[<color=yellow><b>$KEY_AltPlace</b></color>] $showChunkArea";
+        if (c_canTurnOff && currentFuel > 0)
+            str += $"\n[<color=yellow><b>$chunkloader_hold_key $KEY_AltPlace</b></color>] {(IsEnabled() ? "$chunkloader_deactivate" : "$chunkloader_activate")}";
+
+        return Localization.instance.Localize(str);
     }
 
     private void UpdateVisuals()
