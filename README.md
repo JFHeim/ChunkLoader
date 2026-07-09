@@ -90,8 +90,9 @@ Configuration is controlled by the server to ensure all players use the same set
 
 ## Credits
 
-<img alt="Discord Logo" src="https://freelogopng.com/images/all_img/1691730813discord-icon-png.png" width="16"> Discord — `justafrogger`<br>
-<img alt="Thunderstore Logo" src="https://gcdn.thunderstore.io/live/community/valheim/PNG_color_logo_only_1_transparent.png" width="14"/> [Thunderstore](https://valheim.thunderstore.io/package/Frogger/ChunkLoader/)
+<img alt="Discord Logo" src="https://freelogopng.com/images/all_img/1691730813discord-icon-png.png" width="16"> Discord — `justafrogger` <br>
+<img alt="Thunderstore Logo" src="https://gcdn.thunderstore.io/live/community/valheim/PNG_color_logo_only_1_transparent.png" width="14"/> [Thunderstore](https://valheim.thunderstore.io/package/Frogger/ChunkLoader/) <br>
+<img alt="Helium Logo" src="https://mods.valtools.org/favicon.ico" width="14"/> [Helium](https://mods.valtools.org/mods/1/August/ChunkLoader) <br>
 
 If you encounter a bug, have a suggestion, or want to request a feature, feel free to contact me on Discord or open a GitHub Issue.
 
