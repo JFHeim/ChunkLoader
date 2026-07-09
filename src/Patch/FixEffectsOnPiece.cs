@@ -25,7 +25,7 @@ internal static class FixEffectsOnPiece
         }
 
         var smelter = __instance.GetPrefab("smelter")?.GetComponent<WearNTear>();
-        if (smelter) chunkLoader.GetComponent<ChunkLoaderMono>().m_fuelAddedEffects = smelter.GetComponent<Smelter>().m_fuelAddedEffects;
+        if (smelter) chunkLoader.GetComponent<ChunkLoaderMono>()._fuelAddedEffects = smelter.GetComponent<Smelter>().m_fuelAddedEffects;
         Fix(chunkLoader.transform, guardStone.transform, "SM_cloumn", "default");
     }
 

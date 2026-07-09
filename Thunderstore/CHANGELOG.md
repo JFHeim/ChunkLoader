@@ -13,3 +13,4 @@
 | 1.5.2   | 24.05.2024 | Fixed NoUselessWarnings dependency. Made it SoftDependency                                                                                                                
 | 1.7.0   | 03.04.2026 | Major project restucture and code refactor. Moved away from JFUtils                                                                                                       
 | 1.7.1   | 05.04.2026 | Added French, Spanish, German, Chinese translations. Now loaders are visible on a minimap. Fixed shader warnings. Optimized loaders lookup logic
+| 1.7.1   | 05.04.2026 | Bug fixes, now you can enable/disable the pillar, see it's range

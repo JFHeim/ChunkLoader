@@ -10,13 +10,12 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
     private float _lastUseTime = 0;
 
     private ZNetView? _nview;
-    internal EffectList m_fuelAddedEffects = new();
+    internal EffectList _fuelAddedEffects = new();
     private Renderer? _renderer;
 
     private Color _workingColor = Color.clear;
-    private float _updateTime;
-    private float _lastToggleActiveStateTime;
-    private readonly StringBuilder _sb = new();
+    private float _updateTime = -1;
+    private bool? _lastVisualState;
 
     private static ItemDrop? c_fuelItem => ConfigsContainer.FuelItem;
     private static int c_startFuel => ConfigsContainer.StartFuel;
@@ -24,8 +23,6 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
     private static int m_maxFuel => ConfigsContainer.MaxFuel;
     private static Color c_flashColor => ConfigsContainer.TerrainFlashColor;
     private static bool c_canTurnOff => ConfigsContainer.CanTurnOffLoaders;
-
-    private void Start() => _updateTime = Time.time + 10f;
 
     public override void Awake()
     {
@@ -51,11 +48,12 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
 
     public override void SUpdate(float time, Vector2i referenceZone)
     {
-        if(!_nview) return;
-
-        if (!_nview.IsValid() || time > _updateTime) return;
-        _updateTime = time + 10f;
-        UpdateVisuals();
+        if(!_nview || !_nview.IsValid()) return;
+        if (Mathf.Approximately(_updateTime, -1) || time >= _updateTime)
+        {
+            _updateTime = time + 3f;
+            UpdateVisuals();
+        }
     }
 
     private void RPC_AddFuelAmount(long sender)
@@ -93,75 +91,52 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
 
     public bool Interact(Humanoid user, bool hold, bool alt)
     {
+        if (hold) return false;
+
         if (!_nview)
         {
             Log.Error($"ZNetView is null, this should not happen. Have you modified '{PrefabName}' prefab in a some way?");
             return false;
         }
-
         if (c_fuelItem == null)
         {
             Log.Error($"FuelItem is null, this should not happen. Have you deleted '{DefaultFuel}' item from ObjectDB");
             return false;
         }
 
-        var currentFuel = _nview.GetZDO().GetFloat(ZDOVars.s_fuel, 0f);
-        var time = Time.time;
-        if (c_canTurnOff && hold && alt && currentFuel > 0)
+        if (c_canTurnOff && !alt)
         {
-            if (_lastToggleActiveStateTime <= time)
-            {
-                _nview.InvokeRPC(nameof(RPC_ToggleActiveState), -1);
-                _lastToggleActiveStateTime = time + 1f;
-            }
+            _nview.InvokeRPC(nameof(RPC_ToggleActiveState), -1);
             return true;
         }
 
-        // if (hold && (HoldRepeatInterval <= 0.0 || time - _lastUseTime < HoldRepeatInterval)) return false;
-        // _lastUseTime = time;
-
-        if (!_nview.HasOwner()) _nview.ClaimOwnership();
-        if (alt && !hold)
+        if (alt)
         {
-            var centerPosition = transform.position;
-            var centerZone = ZoneSystem.GetZone(centerPosition);
-            var flashColor = c_flashColor;
-            var flashTime = (float)ConfigsContainer.TerrainFlashTime.TotalSeconds;
-            Heightmap.FindHeightmap(centerPosition).m_meshRenderer.Flash(flashColor, Color.white, flashTime);
-            if (ConfigsContainer.LoadSurroundingZones)
-            {
-                foreach (var pos in ((Vector2i[])
-                         [
-                             new Vector2i(1, 0), new Vector2i(0, 1), new Vector2i(1, 1), new Vector2i(0, -1),
-                             new Vector2i(-1, 0), new Vector2i(-1, -1), new Vector2i(1, -1), new Vector2i(-1, 1)
-                         ]).Select(x => ZoneSystem.GetZonePos(centerZone + x)))
-                {
-                    Heightmap.FindHeightmap(pos).m_meshRenderer.Flash(flashColor, Color.white, flashTime);
-                }
-            }
-
+            HighlightWorkingZone();
             return true;
         }
 
-        var inventory = user.GetInventory();
-        if (inventory == null) return true;
-        if (c_infiniteFuel) return false;
-        if (inventory.HaveItem(c_fuelItem.m_itemData.m_shared.m_name))
-        {
-            if (Mathf.CeilToInt(currentFuel) >= m_maxFuel)
-            {
-                user.Message(MessageHud.MessageType.Center, Localization.instance.Localize("$msg_cantaddmore", c_fuelItem.m_itemData.m_shared.m_name));
-                return false;
-            }
-
-            user.Message(MessageHud.MessageType.Center, Localization.instance.Localize("$msg_fireadding", c_fuelItem.m_itemData.m_shared.m_name));
-            inventory.RemoveItem(c_fuelItem.m_itemData.m_shared.m_name, 1);
-            _nview.InvokeRPC(nameof(RPC_AddFuelAmount));
-            return true;
-        }
-
-        user.Message(MessageHud.MessageType.Center, "$msg_outof " + c_fuelItem.m_itemData.m_shared.m_name);
         return false;
+    }
+
+    private void HighlightWorkingZone()
+    {
+        var centerPosition = transform.position;
+        var centerZone = ZoneSystem.GetZone(centerPosition);
+        var flashColor = c_flashColor;
+        var flashTime = (float)ConfigsContainer.TerrainFlashTime.TotalSeconds;
+        Heightmap.FindHeightmap(centerPosition)?.m_meshRenderer?.Flash(flashColor, Color.white, flashTime);
+        if (ConfigsContainer.LoadSurroundingZones)
+        {
+            foreach (var pos in ((Vector2i[])
+                     [
+                         new Vector2i(1, 0), new Vector2i(0, 1), new Vector2i(1, 1), new Vector2i(0, -1),
+                         new Vector2i(-1, 0), new Vector2i(-1, -1), new Vector2i(1, -1), new Vector2i(-1, 1)
+                     ]).Select(x => ZoneSystem.GetZonePos(centerZone + x)))
+            {
+                Heightmap.FindHeightmap(pos)?.m_meshRenderer?.Flash(flashColor, Color.white, flashTime);
+            }
+        }
     }
 
     public bool UseItem(Humanoid user, ItemDrop.ItemData item)
@@ -179,7 +154,12 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
         }
 
         if (c_infiniteFuel) return false;
-        if (item.m_shared.m_name != c_fuelItem.m_itemData.m_shared.m_name) return false;
+        if (item.m_shared.m_name != c_fuelItem.m_itemData.m_shared.m_name)
+        {
+            user.Message(MessageHud.MessageType.TopLeft, Localization.instance.Localize(
+                    "$chunkloader_you_better_use_right_fuel", c_fuelItem.m_itemData.m_shared.m_name));
+            return false;
+        }
 
         if (Mathf.CeilToInt(_nview.GetZDO().GetFloat(ZDOVars.s_fuel)) >= m_maxFuel)
         {
@@ -228,27 +208,27 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
         var currentFuel = _nview.GetZDO().GetFloat(ZDOVars.s_fuel);
 
         string str = Localization.instance.Localize(PieceLocalNameKey);
-        if (!c_infiniteFuel)
-            str +=
-                $" ( $piece_fire_fuel {Mathf.Ceil(_nview.GetZDO().GetFloat(ZDOVars.s_fuel))}/{m_maxFuel} )\n" +
-                $"[<color=yellow><b>$KEY_Use</b></color>] $piece_use {c_fuelItem.m_itemData.m_shared.m_name}\n" +
-                $"[<color=yellow><b>1-8</b></color>] $piece_useitem";
-
+        if (!c_infiniteFuel) str += $" ($piece_fire_fuel {Mathf.Ceil(currentFuel)}/{m_maxFuel} )";
+        if (c_canTurnOff) str += $"\n[<color=yellow><b>$KEY_Use</b></color>] {(IsEnabled() ? "$chunkloader_deactivate" : "$chunkloader_activate")}\n";
+        if (!c_infiniteFuel) str += $"[<color=yellow><b>1-8</b></color>] $piece_useitem ({c_fuelItem.m_itemData.m_shared.m_name})";
         str += "\n[<color=yellow><b>$KEY_AltPlace</b></color>] $showChunkArea";
-        if (c_canTurnOff && currentFuel > 0)
-            str += $"\n[<color=yellow><b>$chunkloader_hold_key $KEY_AltPlace</b></color>] {(IsEnabled() ? "$chunkloader_deactivate" : "$chunkloader_activate")}";
 
         return Localization.instance.Localize(str);
     }
 
     private void UpdateVisuals()
     {
+        var isBurning = IsBurning();
+        if(_lastVisualState == isBurning) return;
+
         if(!_renderer) return;
         if(!_renderer.material.HasProperty(EmissionColorShaderPropertyID)) return;
 
-        if (!IsBurning()) _renderer.material.SetColor(EmissionColorShaderPropertyID, ChunkLoaderDeactivatedColor * ChunkLoaderDeactivatedEmission);
+        Log.Info("UpdateVisuals");
+        if (!isBurning) _renderer.material.SetColor(EmissionColorShaderPropertyID, ChunkLoaderDeactivatedColor * ChunkLoaderDeactivatedEmission);
         else if (_workingColor != Color.clear) _renderer.material.SetColor(EmissionColorShaderPropertyID, _workingColor);
+        _lastVisualState = isBurning;
     }
 
-    private void SpawnFuelAddedEffect() => m_fuelAddedEffects.Create(transform.position, transform.rotation);
+    private void SpawnFuelAddedEffect() => _fuelAddedEffects.Create(transform.position, transform.rotation);
 }
