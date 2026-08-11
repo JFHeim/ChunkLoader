@@ -1,5 +1,4 @@
-﻿using System.Text;
-using ChunkLoader.Config;
+﻿using ChunkLoader.Config;
 using static ChunkLoader.Consts;
 
 namespace ChunkLoader;
@@ -73,6 +72,9 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
     
     public void RPC_ToggleActiveState(long sender, int maybeBool)
     {
+        // if maybeBool == -1 means we need to switch from off to on or fromm on to off depending on current state
+        // if maybeBool == 1 we turn on, if 0 off
+
         Log.Info($"RPC_ToggleActiveState sender={sender} maybeBoolRaw={maybeBool}");
         if (_nview && _nview.IsValid() && _nview.IsOwner())
         {
@@ -81,7 +83,7 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
             _nview.GetZDO().Set(ZDOVars.s_state, nextState == true ? ZdoEnabled : ZdoDisabled);
             Log.Info($"RPC_ToggleActiveState isCurrentlyEnabled={isCurrentlyEnabled} nextState={nextState}");
 
-            // TODO: add vfx on active state toogle
+            // TODO: add vfx on active state toggle
             // _toggleOnEffects.Create(transform.position, Quaternion.identity, variant: flag ? 2 : 1);
         }
         UpdateVisuals();
@@ -91,6 +93,7 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
 
     public bool Interact(Humanoid user, bool hold, bool alt)
     {
+        Log.Info($"ChunkLoaderMono.Interact hold={hold}, alt={alt}");
         if (hold) return false;
 
         if (!_nview)
@@ -125,7 +128,9 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
         var centerZone = ZoneSystem.GetZone(centerPosition);
         var flashColor = c_flashColor;
         var flashTime = (float)ConfigsContainer.TerrainFlashTime.TotalSeconds;
-        Heightmap.FindHeightmap(centerPosition)?.m_meshRenderer?.Flash(flashColor, Color.white, flashTime);
+        var heightmap = Heightmap.FindHeightmap(centerPosition);
+        Log.Info($"HighlightWorkingZone centerZone={centerZone}, heightmap={heightmap}, m_meshRenderer={heightmap?.m_meshRenderer}");
+        heightmap.m_meshRenderer.Flash(flashColor, Color.white, flashTime);
         if (ConfigsContainer.LoadSurroundingZones)
         {
             foreach (var pos in ((Vector2i[])
@@ -134,7 +139,9 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
                          new Vector2i(-1, 0), new Vector2i(-1, -1), new Vector2i(1, -1), new Vector2i(-1, 1)
                      ]).Select(x => ZoneSystem.GetZonePos(centerZone + x)))
             {
-                Heightmap.FindHeightmap(pos)?.m_meshRenderer?.Flash(flashColor, Color.white, flashTime);
+                var findHeightmap = Heightmap.FindHeightmap(pos);
+                Log.Info($"HighlightWorkingZone findHeightmap={heightmap}, m_meshRenderer={findHeightmap?.m_meshRenderer}");
+                findHeightmap.m_meshRenderer.Flash(flashColor, Color.white, flashTime);
             }
         }
     }
@@ -210,8 +217,8 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
         string str = Localization.instance.Localize(PieceLocalNameKey);
         if (!c_infiniteFuel) str += $" ($piece_fire_fuel {Mathf.Ceil(currentFuel)}/{m_maxFuel} )";
         if (c_canTurnOff) str += $"\n[<color=yellow><b>$KEY_Use</b></color>] {(IsEnabled() ? "$chunkloader_deactivate" : "$chunkloader_activate")}\n";
-        if (!c_infiniteFuel) str += $"[<color=yellow><b>1-8</b></color>] $piece_useitem ({c_fuelItem.m_itemData.m_shared.m_name})";
-        str += "\n[<color=yellow><b>$KEY_AltPlace</b></color>] $showChunkArea";
+        if (!c_infiniteFuel) str += $"[<color=yellow><b>1-8</b></color>] $piece_useitem ({c_fuelItem.m_itemData.m_shared.m_name})\n";
+        str += "[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $showChunkArea";
 
         return Localization.instance.Localize(str);
     }

@@ -12,11 +12,12 @@ public static class TimeSpanToHumanStr
         public string ToHumanTimeString(int significantDigits = 3)
         {
             var format = "G" + significantDigits;
-            return span.TotalMilliseconds < 1000 ? span.TotalMilliseconds.ToString(format)  + " $chunkloader_milliseconds"
-                : (span.TotalSeconds < 60 ? span.TotalSeconds.ToString(format)             + " $chunkloader_seconds"
-                    : (span.TotalMinutes < 60 ? span.TotalMinutes.ToString(format)           + " $chunkloader_minutes"
-                        : (span.TotalHours < 24 ? span.TotalHours.ToString(format)           + " $chunkloader_hours"
-                            : span.TotalDays.ToString(format)           + " $chunkloader_days")));
+            if (span.TotalMilliseconds < 1000) return span.TotalMilliseconds.ToString(format) + " $chunkloader_milliseconds";
+            if (span.TotalSeconds      < 60)   return span.TotalSeconds.ToString(format)      + " $chunkloader_seconds";
+            if (span.TotalMinutes      < 60)   return span.TotalMinutes.ToString(format)      + " $chunkloader_minutes";
+            if (span.TotalHours        < 24)   return span.TotalHours.ToString(format)        + " $chunkloader_hours";
+
+            return span.TotalDays.ToString(format) + " $chunkloader_days";
         }
     }
 }
