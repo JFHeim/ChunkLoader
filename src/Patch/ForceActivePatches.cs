@@ -34,42 +34,15 @@ public class ForceActivePatches
         }
     }
 
+    // InActiveArea and OutsideActiveArea both end up here, so forced zones are always active.
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.InActiveArea), typeof(Vector2s), typeof(Vector2s))]
-    private static void InActiveArea(Vector2s zone, Vector2s refCenterZone, ref bool __result)
-    {
-        if (__result) return;
-        if (ZoneLoadingManager.ForceActive.Contains(zone)) __result = true;
-    }
-
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.InActiveArea), [typeof(Vector2s), typeof(Vector2s), typeof(int)])]
-    private static void InActiveArea2(Vector2s zone, ref bool __result)
+    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.PointInsideActiveArea))]
+    private static void PointInsideActiveArea(Vector3 point, ref bool __result)
     {
         if (__result) return;
         var forceActive = ZoneLoadingManager.ForceActive;
         if (forceActive.Count == 0) return;
-        if (forceActive.Contains(zone)) __result = true;
-    }
-
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.OutsideActiveArea), typeof(Vector3), typeof(Vector3))]
-    private static void OutsideActiveArea1(Vector3 point, ref bool __result)
-    {
-        if (!__result) return;
-        var forceActive = ZoneLoadingManager.ForceActive;
-        if (forceActive.Count == 0) return;
-        if (forceActive.Contains(ZoneSystem.GetZone(point))) __result = false;
-    }
-
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.OutsideActiveArea), typeof(Vector3), typeof(Vector2s), typeof(int))]
-    private static void OutsideActiveArea2(Vector3 point, ref bool __result)
-    {
-        if (!__result) return;
-        var forceActive = ZoneLoadingManager.ForceActive;
-        if (forceActive.Count == 0) return;
-        if (forceActive.Contains(ZoneSystem.GetZone(point))) __result = false;
+        if (forceActive.Contains(ZoneSystem.GetZone(point))) __result = true;
     }
 
     [HarmonyPostfix]
