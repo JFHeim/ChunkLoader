@@ -5,7 +5,7 @@ public static class Consts
     public const string
         ModName = "ChunkLoader",
         ModAuthor = "Frogger",
-        ModVersion = "1.7.3",
+        ModVersion = "1.7.4",
         ModGuid = $"com.{ModAuthor}.{ModName}";
 
     public const string MainSceneName = "main";
