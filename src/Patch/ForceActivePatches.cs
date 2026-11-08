@@ -35,16 +35,16 @@ public class ForceActivePatches
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.InActiveArea), typeof(Vector2i), typeof(Vector2i))]
-    private static void InActiveArea(Vector2i zone, Vector2i refCenterZone, ref bool __result)
+    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.InActiveArea), typeof(Vector2s), typeof(Vector2s))]
+    private static void InActiveArea(Vector2s zone, Vector2s refCenterZone, ref bool __result)
     {
         if (__result) return;
         if (ZoneLoadingManager.ForceActive.Contains(zone)) __result = true;
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.InActiveArea), [typeof(Vector2i), typeof(Vector2i), typeof(int)])]
-    private static void InActiveArea2(Vector2i zone, ref bool __result)
+    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.InActiveArea), [typeof(Vector2s), typeof(Vector2s), typeof(int)])]
+    private static void InActiveArea2(Vector2s zone, ref bool __result)
     {
         if (__result) return;
         var forceActive = ZoneLoadingManager.ForceActive;
@@ -63,7 +63,7 @@ public class ForceActivePatches
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.OutsideActiveArea), typeof(Vector3), typeof(Vector2i), typeof(int))]
+    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.OutsideActiveArea), typeof(Vector3), typeof(Vector2s), typeof(int))]
     private static void OutsideActiveArea2(Vector3 point, ref bool __result)
     {
         if (!__result) return;
@@ -74,18 +74,22 @@ public class ForceActivePatches
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(ZDOMan), nameof(ZDOMan.FindSectorObjects))]
-    private static void FindSectorObjects(ZDOMan __instance, Vector2i sector, int area, List<ZDO> sectorObjects)
+    private static void FindSectorObjects(ZDOMan __instance, Vector2s sector, int area, List<ZDO> sectorObjects)
     {
         var forceActive = ZoneLoadingManager.ForceActive;
         if (forceActive.Count == 0) return;
         foreach (var zone in forceActive)
         {
             if (zone.x >= sector.x - area && zone.x <= sector.x + area && zone.y <= sector.y + area && zone.y >= sector.y - area) continue;
-            __instance.FindObjects(zone, sectorObjects);
+            __instance.FindObjects(zone, sectorObjects, __instance.m_visitedSectorIndices);
         }
     }
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(ZDOMan), nameof(ZDOMan.FindDistantObjects))]
-    private static bool FindDistantObjects(Vector2i sector) => !ZoneLoadingManager.ForceActive.Contains(sector);
+    private static bool FindDistantObjects(Vector2s sector)
+    {
+        if (ZoneLoadingManager.ForceActive.Contains(sector)) return false;
+        return true;
+    }
 }

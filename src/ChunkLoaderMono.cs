@@ -5,9 +5,6 @@ namespace ChunkLoader;
 
 public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
 {
-    private const float HoldRepeatInterval = 0.2f;
-    private float _lastUseTime = 0;
-
     private ZNetView? _nview;
     internal EffectList _fuelAddedEffects = new();
     private Renderer? _renderer;
@@ -45,7 +42,7 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
         else if (_renderer.material.HasProperty(EmissionColorShaderPropertyID)) _workingColor = _renderer.material.GetColor(EmissionColorShaderPropertyID);
     }
 
-    public override void SUpdate(float time, Vector2i referenceZone)
+    public override void SUpdate(float time, Vector2s referenceZone)
     {
         if(!_nview || !_nview.IsValid()) return;
         if (Mathf.Approximately(_updateTime, -1) || time >= _updateTime)
@@ -90,6 +87,7 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
     }
 
     public string GetHoverName() => PieceLocalNameKey;
+    public float GetHoverOffset() => 0;
 
     public bool Interact(Humanoid user, bool hold, bool alt)
     {
@@ -129,20 +127,30 @@ public class ChunkLoaderMono : SlowUpdate, Hoverable, Interactable
         var flashColor = c_flashColor;
         var flashTime = (float)ConfigsContainer.TerrainFlashTime.TotalSeconds;
         var heightmap = Heightmap.FindHeightmap(centerPosition);
-        Log.Info($"HighlightWorkingZone centerZone={centerZone}, heightmap={heightmap}, m_meshRenderer={heightmap?.m_meshRenderer}");
-        heightmap.m_meshRenderer.Flash(flashColor, Color.white, flashTime);
-        if (ConfigsContainer.LoadSurroundingZones)
+        // Log.Info($"HighlightWorkingZone centerZone={centerZone}, heightmap={heightmap?.ToString()??"null"}, m_meshRenderer={heightmap?.m_meshRenderer}");
+        if (heightmap is null)
         {
-            foreach (var pos in ((Vector2i[])
-                     [
-                         new Vector2i(1, 0), new Vector2i(0, 1), new Vector2i(1, 1), new Vector2i(0, -1),
-                         new Vector2i(-1, 0), new Vector2i(-1, -1), new Vector2i(1, -1), new Vector2i(-1, 1)
-                     ]).Select(x => ZoneSystem.GetZonePos(centerZone + x)))
+            Log.Warning("HighlightWorkingZone: not able to find the main heightmap");
+            return;
+        }
+
+        heightmap.m_meshRenderer.Flash(flashColor, Color.white, flashTime);
+
+        if (!ConfigsContainer.LoadSurroundingZones) return;
+        foreach (var pos in ((Vector2s[])
+                 [
+                     new Vector2s(1, 0), new Vector2s(0, 1), new Vector2s(1, 1), new Vector2s(0, -1),
+                     new Vector2s(-1, 0), new Vector2s(-1, -1), new Vector2s(1, -1), new Vector2s(-1, 1)
+                 ]).Select(x => ZoneSystem.GetZonePos(centerZone + x)))
+        {
+            var findHeightmap = Heightmap.FindHeightmap(pos);
+            // Log.Info($"HighlightWorkingZone findHeightmap={heightmap}, m_meshRenderer={findHeightmap?.m_meshRenderer}");
+            if (!findHeightmap)
             {
-                var findHeightmap = Heightmap.FindHeightmap(pos);
-                Log.Info($"HighlightWorkingZone findHeightmap={heightmap}, m_meshRenderer={findHeightmap?.m_meshRenderer}");
-                findHeightmap.m_meshRenderer.Flash(flashColor, Color.white, flashTime);
+                Log.Warning("HighlightWorkingZone: not able to find one of surrounding heightmaps");
+                continue;
             }
+            findHeightmap.m_meshRenderer.Flash(flashColor, Color.white, flashTime);
         }
     }
 

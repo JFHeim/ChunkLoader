@@ -5,10 +5,10 @@ namespace ChunkLoader;
 
 public class ZoneLoadingManager : MonoBehaviour
 {
-    public static HashSet<Vector2i> ForceActive => _instance?._forceActive ?? [];
+    public static HashSet<Vector2s> ForceActive => _instance?._forceActive ?? [];
     public static List<ZDO> LoadersInWorld => _instance?._loadersInWorld ?? [];
 
-    private readonly HashSet<Vector2i> _forceActive = [];
+    private readonly HashSet<Vector2s> _forceActive = [];
     private readonly List<ZDO> _loadersInWorld = [];
     private readonly List<Minimap.PinData> _loadersMinimapPins = [];
 
@@ -98,18 +98,18 @@ public class ZoneLoadingManager : MonoBehaviour
         {
             if (!ChunkLoaderMono.IsBurning(zdo)) continue;
             var loaderPos = zdo.GetPosition();
-            Vector2i loaderCenterZone = ZoneSystem.GetZone(loaderPos);
-            _forceActive.Add(loaderCenterZone + new Vector2i(0, 0));
+            Vector2s loaderCenterZone = ZoneSystem.GetZone(loaderPos);
+            _forceActive.Add(loaderCenterZone + new Vector2s(0, 0));
             if (ConfigsContainer.LoadSurroundingZones)
             {
-                _forceActive.Add(loaderCenterZone + new Vector2i(1, 0));
-                _forceActive.Add(loaderCenterZone + new Vector2i(0, 1));
-                _forceActive.Add(loaderCenterZone + new Vector2i(1, 1));
-                _forceActive.Add(loaderCenterZone + new Vector2i(0, -1));
-                _forceActive.Add(loaderCenterZone + new Vector2i(-1, 0));
-                _forceActive.Add(loaderCenterZone + new Vector2i(-1, -1));
-                _forceActive.Add(loaderCenterZone + new Vector2i(1, -1));
-                _forceActive.Add(loaderCenterZone + new Vector2i(-1, 1));
+                _forceActive.Add(loaderCenterZone + new Vector2s(1, 0));
+                _forceActive.Add(loaderCenterZone + new Vector2s(0, 1));
+                _forceActive.Add(loaderCenterZone + new Vector2s(1, 1));
+                _forceActive.Add(loaderCenterZone + new Vector2s(0, -1));
+                _forceActive.Add(loaderCenterZone + new Vector2s(-1, 0));
+                _forceActive.Add(loaderCenterZone + new Vector2s(-1, -1));
+                _forceActive.Add(loaderCenterZone + new Vector2s(1, -1));
+                _forceActive.Add(loaderCenterZone + new Vector2s(-1, 1));
             }
         }
     }
