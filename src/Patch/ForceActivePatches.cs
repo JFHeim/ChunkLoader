@@ -1,4 +1,6 @@
-﻿namespace ChunkLoader.Patch;
+﻿using System.Reflection.Emit;
+
+namespace ChunkLoader.Patch;
 
 [HarmonyPatch]
 public class ForceActivePatches
@@ -17,7 +19,6 @@ public class ForceActivePatches
             break;
         }
     }
-
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.IsActiveAreaLoaded))]
@@ -45,24 +46,23 @@ public class ForceActivePatches
         if (forceActive.Contains(ZoneSystem.GetZone(point))) __result = true;
     }
 
-    [HarmonyPostfix]
+    // Forced zones are added right after the visited sectors are cleared, so they are handled as near zones
+    // and the distant object search skips them.
+    [HarmonyTranspiler]
     [HarmonyPatch(typeof(ZDOMan), nameof(ZDOMan.FindSectorObjects))]
-    private static void FindSectorObjects(ZDOMan __instance, Vector2s sector, int area, List<ZDO> sectorObjects)
-    {
-        var forceActive = ZoneLoadingManager.ForceActive;
-        if (forceActive.Count == 0) return;
-        foreach (var zone in forceActive)
-        {
-            if (zone.x >= sector.x - area && zone.x <= sector.x + area && zone.y <= sector.y + area && zone.y >= sector.y - area) continue;
-            __instance.FindObjects(zone, sectorObjects, __instance.m_visitedSectorIndices);
-        }
-    }
+    private static IEnumerable<CodeInstruction> FindSectorObjects(IEnumerable<CodeInstruction> instructions) =>
+        new CodeMatcher(instructions)
+            .MatchForward(false, new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(HashSet<ZoneSystem.SectorIndex>), nameof(HashSet<ZoneSystem.SectorIndex>.Clear))))
+            .Advance(1)
+            .Insert(
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldarg_3),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(ForceActivePatches), nameof(AddForceActiveZones))))
+            .InstructionEnumeration();
 
-    [HarmonyPrefix]
-    [HarmonyPatch(typeof(ZDOMan), nameof(ZDOMan.FindDistantObjects))]
-    private static bool FindDistantObjects(Vector2s sector)
+    private static void AddForceActiveZones(ZDOMan manager, List<ZDO> sectorObjects)
     {
-        if (ZoneLoadingManager.ForceActive.Contains(sector)) return false;
-        return true;
+        foreach (var zone in ZoneLoadingManager.ForceActive)
+            manager.FindObjects(zone, sectorObjects, manager.m_visitedSectorIndices);
     }
 }
