@@ -399,3 +399,4 @@ FodyWeavers.xsd
 .idea
 /build
 Thunderstore/*.dll
+Thunderstore/Архив.zip
