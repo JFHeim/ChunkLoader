@@ -15,3 +15,4 @@
 | 1.7.1   | 05.04.2026 | Added French, Spanish, German, Chinese translations. Now loaders are visible on a minimap. Fixed shader warnings. Optimized loaders lookup logic
 | 1.7.1   | 05.04.2026 | Bug fixes, now you can enable/disable the pillar, see it's range
 | 1.7.2   | 11.08.2026 | A few adjustments
+| 1.7.3   | 08.11.2026 | Fixes for Valhem 1.0
